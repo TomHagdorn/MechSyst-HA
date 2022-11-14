@@ -1,0 +1,62 @@
+/*!
+  \file Ampelschaltung.ino
+
+  \brief LED blinken nach Tasterdruck wie eine Ampel (Der Code ist aus der Hausaufgabe Ampel_LCD besser beschrieben)
+          Behilfliche Seite: https://hartmut-waller.info/arduinoblog/leds-schieberegister/
+
+  \author Fatih Sözer, 3245736
+
+*/
+
+#include <SPI.h>
+
+int shiftPin = 10;  //Zum Reinschieben der Daten mit SH_CP des 74HC595
+int storePin = 9;   //Übertragen auf Ausgabepin mit ST_CP
+int dataPin = 8;    //wo die Daten hinsollen
+
+unsigned long counter = 50;
+unsigned long lastDebounceTime = 0;
+
+byte AussenNachInnen[] =
+{
+  B10000001, B01000010, B00100100, B00011000,
+  B00100100, B01000010, B10000001
+};
+
+void setup() {
+  pinMode(storePin, OUTPUT);
+  pinMode(shiftPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+}
+
+void loop()
+{
+  unsigned long currentMillis = millis();
+
+  /*
+    Lauflicht vorwärts
+    LSBFIRST Bits von rechts ins Register schieben
+    dann jeweils 1 Bit nach rechts schieben
+    Startpunkt hängt davon ab, an welchen Pins die
+    1. Led und die weiteren LEDs gesteckt sind
+  */
+  byte LED = B10000000;
+
+  // die letzte LED bleibt an
+  for (int i = 0; i <= 7; i++)
+  {
+    // Ausgaberegister ausschalten
+    digitalWrite(storePin, 0);
+
+    // Bits von rechts in das Register schieben
+    shiftOut(dataPin, shiftPin, LSBFIRST, LED);
+
+    // Ausgaberegister einschalten
+    digitalWrite(storePin, 1);
+    delay(200);
+
+    // 1 Bit nach rechts schieben
+    LED = LED >> 1;
+  }
+  
+}
